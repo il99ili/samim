@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<!--
+  =====================================================
+  client.html — لوحة تحكم العميل
+  =====================================================
+  هذه الصفحة تظهر للعميل بعد تسجيل الدخول
+  في المستقبل: تأكد أن المستخدم مسجّل دخول قبل
+  عرض هذه الصفحة (حماية عبر الـ Backend)
+  =====================================================
+-->
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>لوحة العميل — إبداع</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* ─── تخطيط الصفحة (سايدبار + محتوى) ─── */
+    .dash-layout {
+      display: grid;
+      grid-template-columns: 240px 1fr; /* عرض السايدبار — غيّره لو أبغيه أضيق */
+      min-height: 100vh;
+      padding-top: 68px; /* ارتفاع النافبار */
+    }
+    .dash-main {
+      padding: 36px 40px 100px;
+      background: var(--black);
+      overflow-y: auto;
+    }
+
+    /* ─── رأس الصفحة ─── */
+    .dash-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 36px;
+    }
+    .dash-title { font-size: 26px; font-weight: 900; }
+    .dash-sub   { color: var(--gray-muted); font-size: 14px; margin-top: 4px; }
+
+    /* ─── صف الإحصائيات (4 بطاقات) ─── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr); /* 4 بطاقات — غيّر لـ 2 للموبايل */
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: var(--radius);
+      padding: 22px 24px;
+    }
+    .stat-card-label {
+      font-size: 12px;
+      color: var(--gray-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+    .stat-card-value { font-size: 28px; font-weight: 900; }
+    /* ألوان مختلفة لقيم مختلفة */
+    .stat-card-value.green { color: var(--primary-light); }
+    .stat-card-value.amber { color: var(--warning); }
+    .stat-card-sub { font-size: 12px; color: var(--gray-muted); margin-top: 4px; }
+
+    /* ─── البطاقة العامة (كونتينر للأقسام) ─── */
+    .timeline-card {
+      background: var(--surface);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: var(--radius);
+      padding: 28px;
+      margin-bottom: 24px;
+    }
+    .card-title {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    /* الشارة الصغيرة بجانب العنوان */
+    .card-badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 50px;
+      background: rgba(0,97,91,0.15);
+      color: var(--primary-light);
+      border: 1px solid rgba(0,97,91,0.25);
+    }
+
+    /* ─── الشريط الزمني ─── */
+    .timeline {
+      display: flex;
+      position: relative;
+      padding-bottom: 12px;
+    }
+    /* الخط الأفقي خلف النقاط */
+    .timeline::before {
+      content: '';
+      position: absolute;
+      top: 18px;
+      right: 18px;
+      left: 18px;
+      height: 2px;
+      background: var(--gray-border);
+    }
+    .timeline-step {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      position: relative;
+      z-index: 1;
+    }
+    /* الدائرة في كل مرحلة */
+    .step-dot {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+      border: 2px solid;
+      background: var(--black);
+    }
+    .step-dot.done    { border-color: var(--primary); background: var(--primary); color: white; }
+    .step-dot.active  { border-color: var(--primary); color: var(--primary); box-shadow: 0 0 0 4px rgba(0,97,91,0.2); }
+    .step-dot.pending { border-color: var(--gray-border); color: var(--gray-muted); }
+
+    .step-label       { font-size: 12px; font-weight: 600; text-align: center; }
+    .step-label.done  { color: var(--primary-light); }
+    .step-label.active{ color: var(--white); }
+    .step-label.pending{ color: var(--gray-muted); }
+    .step-date        { font-size: 11px; color: var(--gray-muted); }
+
+    /* ─── سجل الإصدارات ─── */
+    .versions-list { display: flex; flex-direction: column; gap: 12px; }
+    .version-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 14px 18px;
+      background: rgba(255,255,255,0.03);
+      border-radius: var(--radius-sm);
+      border: 1px solid rgba(255,255,255,0.05);
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+    .version-item:hover { border-color: rgba(0,97,91,0.3); background: rgba(0,97,91,0.05); }
+    .version-badge {
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--primary-light);
+      background: rgba(0,97,91,0.12);
+      border: 1px solid rgba(0,97,91,0.25);
+      padding: 4px 10px;
+      border-radius: 6px;
+      min-width: 40px;
+      text-align: center;
+    }
+    .version-info   { flex: 1; }
+    .version-name   { font-size: 14px; font-weight: 600; }
+    .version-date   { font-size: 12px; color: var(--gray-muted); }
+    /* شارة حالة الإصدار */
+    .version-status { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 50px; }
+    .version-status.approved { background: rgba(16,185,129,0.1); color: var(--success); }
+    .version-status.current  { background: rgba(0,97,91,0.15);   color: var(--primary-light); }
+
+    /* ─── طلبات الاعتماد ─── */
+    .approval-list { display: flex; flex-direction: column; gap: 12px; }
+    .approval-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 18px;
+      background: rgba(245,158,11,0.05);
+      border: 1px solid rgba(245,158,11,0.2);
+      border-radius: var(--radius-sm);
+      transition: all 0.6s ease;
+    }
+    .approval-icon   { font-size: 24px; }
+    .approval-info   { flex: 1; }
+    .approval-title  { font-size: 14px; font-weight: 600; margin-bottom: 3px; }
+    .approval-desc   { font-size: 12px; color: var(--gray-muted); }
+    .approval-actions{ display: flex; gap: 8px; }
+
+    /* زر الاعتماد */
+    .btn-approve {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-family: var(--font);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+    .btn-approve:hover { background: var(--primary-light); }
+
+    /* زر الرفض */
+    .btn-reject {
+      background: transparent;
+      color: var(--danger);
+      border: 1px solid rgba(239,68,68,0.3);
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-family: var(--font);
+      font-size: 13px;
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+    .btn-reject:hover { background: rgba(239,68,68,0.1); }
+
+    /* ─── تخطيط عمودين ─── */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+
+    /* ─── صف الشات ─── */
+    .chat-input-row { display: flex; gap: 10px; }
+  </style>
+</head>
+<body>
+
+<!-- ─── النافبار العلوي ─── -->
+<nav class="nav">
+  <a href="index.html" class="nav-logo">إبداع<span>.</span></a>
+  <ul class="nav-links">
+    <li><a href="#">مشروعي</a></li>
+    <li><a href="#">الفواتير</a></li>
+    <li><a href="#">الدعم</a></li>
+  </ul>
+  <div class="nav-actions">
+    <!-- زر تسجيل الخروج — في الحقيقة: يمسح الجلسة ويرجع للرئيسية -->
+    <button class="btn btn-ghost" onclick="window.location='index.html'">تسجيل الخروج</button>
+  </div>
+</nav>
+
+<!-- ─── تخطيط الصفحة ─── -->
+<div class="dash-layout">
+
+  <!-- ═══ السايدبار ═══ -->
+  <aside class="sidebar">
+    <!-- معلومات العميل — في الحقيقة: تجي من الـ API بعد تسجيل الدخول -->
+    <div class="sidebar-user">
+      <!-- الحرف الأول من الاسم — في الحقيقة: صورة شخصية -->
+      <div class="user-avatar" id="userAvatar">م</div>
+      <div class="user-name" id="userName">محمد الشمري</div>
+      <div class="user-role" id="userRole">عميل — هوية بصرية</div>
+    </div>
+
+    <!-- قائمة السايدبار — عدّل الأسماء والروابط -->
+    <ul class="sidebar-nav">
+      <li><a href="#" class="active"><span class="icon">📊</span> لوحة التحكم</a></li>
+      <li><a href="#"><span class="icon">🗂️</span> طلباتي</a></li>
+      <!-- الشارة الحمراء تظهر عدد الإشعارات — حدّثها بالـ JS -->
+      <li><a href="#approvals"><span class="icon">🔔</span> الاعتمادات <span class="nav-badge" id="approvalBadge">2</span></a></li>
+      <li><a href="#versions"><span class="icon">🕒</span> سجل الإصدارات</a></li>
+      <li><a href="#chat"><span class="icon">💬</span> المحادثة</a></li>
+      <li><a href="#"><span class="icon">📄</span> العقود</a></li>
+      <li><a href="#"><span class="icon">💳</span> المدفوعات</a></li>
+    </ul>
+  </aside>
+
+  <!-- ═══ المحتوى الرئيسي ═══ -->
+  <main class="dash-main">
+
+    <!-- رأس الصفحة -->
+    <div class="dash-header">
+      <div>
+        <!-- في الحقيقة: اعرض اسم العميل من قاعدة البيانات -->
+        <div class="dash-title">مرحباً، محمد 👋</div>
+        <div class="dash-sub" id="projectStatus">
+          مشروعك في مرحلة التصميم — آخر تحديث منذ ساعتين
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="alert('قريباً — نموذج طلب جديد')">+ طلب جديد</button>
+    </div>
+
+    <!-- ═══ إحصائيات سريعة ═══ -->
+    <!-- في الحقيقة: اجلب هذه الأرقام من: GET /api/orders/:id/summary -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-card-label">المرحلة الحالية</div>
+        <div class="stat-card-value green">التصميم</div>
+        <div class="stat-card-sub">المرحلة 2 من 4</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">إصدارات التصميم</div>
+        <div class="stat-card-value">3</div>
+        <div class="stat-card-sub">آخر إصدار V3 — أمس</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">بانتظار اعتمادك</div>
+        <div class="stat-card-value amber">2</div>
+        <div class="stat-card-sub">ملف + مرحلة</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">موعدك القادم</div>
+        <div class="stat-card-value" style="font-size:18px">الأربعاء</div>
+        <div class="stat-card-sub">10:00 ص — أونلاين</div>
+      </div>
+    </div>
+
+    <!-- ═══ الشريط الزمني لمراحل المشروع ═══ -->
+    <!-- في الحقيقة: اجلب المراحل من: GET /api/orders/:id/timeline -->
+    <div class="timeline-card">
+      <div class="card-title">
+        خط سير مشروعك
+        <span class="card-badge">قيد التنفيذ</span>
+      </div>
+      <div class="timeline">
+        <!-- المرحلة 1 — مكتملة -->
+        <div class="timeline-step">
+          <div class="step-dot done">✓</div>
+          <div class="step-label done">الاستلام</div>
+          <div class="step-date">15 مايو</div>
+        </div>
+        <!-- المرحلة 2 — الحالية (نشطة) -->
+        <div class="timeline-step">
+          <div class="step-dot active">✎</div>
+          <div class="step-label active">التصميم</div>
+          <div class="step-date">جارٍ الآن</div>
+        </div>
+        <!-- المرحلة 3 — لم تبدأ -->
+        <div class="timeline-step">
+          <div class="step-dot pending">◎</div>
+          <div class="step-label pending">الاعتماد</div>
+          <div class="step-date">قريباً</div>
+        </div>
+        <!-- المرحلة 4 — لم تبدأ -->
+        <div class="timeline-step">
+          <div class="step-dot pending">🏭</div>
+          <div class="step-label pending">التصنيع</div>
+          <div class="step-date">يونيو</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ عمودين: الإصدارات + طلبات الاعتماد ═══ -->
+    <div class="grid-2">
+
+      <!-- سجل الإصدارات -->
+      <!-- في الحقيقة: اجلب من: GET /api/orders/:id/versions -->
+      <div class="timeline-card" id="versions" style="margin-bottom:0">
+        <div class="card-title">سجل الإصدارات</div>
+        <div class="versions-list">
+          <!-- الإصدار الحالي -->
+          <div class="version-item" onclick="downloadVersion('V3')">
+            <div class="version-badge">V3</div>
+            <div class="version-info">
+              <div class="version-name">تعديل الألوان والخطوط</div>
+              <div class="version-date">أمس — 4:30 م</div>
+            </div>
+            <div class="version-status current">الحالي</div>
+          </div>
+          <!-- الإصدار المعتمد -->
+          <div class="version-item" onclick="downloadVersion('V2')">
+            <div class="version-badge">V2</div>
+            <div class="version-info">
+              <div class="version-name">تعديل الشعار + طلب عميل</div>
+              <div class="version-date">18 مايو — 2:00 م</div>
+            </div>
+            <div class="version-status approved">معتمد</div>
+          </div>
+          <div class="version-item" onclick="downloadVersion('V1')">
+            <div class="version-badge">V1</div>
+            <div class="version-info">
+              <div class="version-name">الإصدار الأولي</div>
+              <div class="version-date">16 مايو — 11:00 ص</div>
+            </div>
+            <div class="version-status approved">معتمد</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- طلبات الاعتماد -->
+      <!-- في الحقيقة: اجلب من: GET /api/approvals?client_id=:id -->
+      <div class="timeline-card" id="approvals" style="margin-bottom:0">
+        <div class="card-title">بانتظار اعتمادك 🔔</div>
+        <div class="approval-list" id="approvalList">
+
+          <!-- طلب اعتماد ملف -->
+          <div class="approval-item" data-id="101">
+            <div class="approval-icon">📁</div>
+            <div class="approval-info">
+              <div class="approval-title">ملف الإصدار V3 جاهز للمراجعة</div>
+              <div class="approval-desc">رفعه المصمم: أحمد الغامدي — اليوم 9:14 ص</div>
+            </div>
+            <div class="approval-actions">
+              <!-- عند الضغط: يرسل POST /api/approvals/101/approve -->
+              <button class="btn-approve" onclick="approveItem(this)">اعتماد</button>
+              <button class="btn-reject" onclick="rejectItem(this)">تعديل</button>
+            </div>
+          </div>
+
+          <!-- طلب اعتماد مرحلة -->
+          <div class="approval-item" data-id="102">
+            <div class="approval-icon">📋</div>
+            <div class="approval-info">
+              <div class="approval-title">اعتماد مرحلة التصميم للمتابعة</div>
+              <div class="approval-desc">الموافقة تتيح الانتقال لمرحلة الإنتاج</div>
+            </div>
+            <div class="approval-actions">
+              <button class="btn-approve" onclick="approveItem(this)">اعتماد</button>
+              <button class="btn-reject" onclick="rejectItem(this)">رفض</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ الشات مع المصمم ═══ -->
+    <!--
+      في الحقيقة: اربط الشات بـ:
+      - WebSocket (socket.io) للرسائل الفورية
+      - أو Pusher / Firebase Realtime DB
+      - الرسائل القديمة: GET /api/messages?order_id=:id
+      - إرسال رسالة: POST /api/messages
+    -->
+    <div class="timeline-card" id="chat" style="margin-top:4px">
+      <div class="card-title">المحادثة مع المصمم — أحمد الغامدي</div>
+      <div class="chat-container">
+
+        <!-- قائمة الرسائل -->
+        <div class="chat-messages" id="chatMessages">
+          <!-- رسائل الموظف (theirs) -->
+          <div class="msg theirs">
+            <div class="msg-avatar staff">أ</div>
+            <div>
+              <div class="msg-bubble">أهلاً محمد، رفعت الإصدار الثالث للملف. شوف ملاحظاتك وأخبرني.</div>
+              <div class="msg-time">9:14 ص</div>
+            </div>
+          </div>
+          <div class="msg theirs">
+            <div class="msg-avatar staff">أ</div>
+            <div>
+              <div class="msg-bubble">غيّرت الخط كما طلبت وعدّلت درجة اللون الرئيسي.</div>
+              <div class="msg-time">9:15 ص</div>
+            </div>
+          </div>
+          <!-- رسائل العميل (mine) -->
+          <div class="msg mine">
+            <div class="msg-avatar client">م</div>
+            <div>
+              <div class="msg-bubble">ما شاء الله! بس ودي أشوف الشعار أكبر شوي في النسخة الرأسية.</div>
+              <div class="msg-time">10:02 ص</div>
+            </div>
+          </div>
+          <div class="msg theirs">
+            <div class="msg-avatar staff">أ</div>
+            <div>
+              <div class="msg-bubble">تمام، أعدّل وأرسل لك نسخة محدّثة قبل الساعة 2 ✓</div>
+              <div class="msg-time">10:05 ص</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- حقل الكتابة -->
+        <div class="chat-input-row">
+          <input
+            class="chat-input"
+            id="chatInput"
+            placeholder="اكتب رسالتك هنا..."
+            onkeydown="sendMsg(event)"
+          >
+          <button class="chat-send-btn" onclick="sendMsg({key:'Enter'})">↑</button>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+</div><!-- end .dash-layout -->
+
+<script src="js/main.js"></script>
+
+<script>
+  /* ─── دوال خاصة بصفحة العميل ─── */
+
+  /**
+   * تنزيل إصدار التصميم
+   * في الحقيقة: اجلب رابط الملف من: GET /api/versions/:id/download
+   */
+  function downloadVersion(version) {
+    alert(`سيتم تنزيل ${version} — اربط هذا بـ Storage سحابي مثل S3`);
+  }
+</script>
+
+</body>
+</html>

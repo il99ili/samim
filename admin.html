@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<!--
+  =====================================================
+  admin.html — لوحة الإدارة والموظفين
+  =====================================================
+  هذه الصفحة للمدير والموظفين فقط
+  في الحقيقة: احمها بـ middleware يتحقق من الصلاحية
+  مثال (Laravel): middleware('role:admin,staff')
+  =====================================================
+-->
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>لوحة الإدارة — إبداع</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* ─── نفس تخطيط صفحة العميل ─── */
+    .dash-layout {
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      min-height: 100vh;
+      padding-top: 68px;
+    }
+    .dash-main { padding: 36px 40px 100px; background: var(--black); }
+    .dash-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 36px; }
+    .dash-title  { font-size: 26px; font-weight: 900; }
+    .dash-sub    { color: var(--gray-muted); font-size: 14px; margin-top: 4px; }
+
+    /* ─── إحصائيات الإدارة ─── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: var(--radius);
+      padding: 22px 24px;
+    }
+    .stat-card-label {
+      font-size: 12px; color: var(--gray-muted); font-weight: 600;
+      text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;
+    }
+    .stat-card-value { font-size: 28px; font-weight: 900; }
+    .stat-card-value.green { color: var(--primary-light); }
+    .stat-card-value.amber { color: var(--warning); }
+    .stat-card-sub  { font-size: 12px; color: var(--gray-muted); margin-top: 4px; }
+
+    /* ─── التبويبات (Tabs) ─── */
+    .admin-tabs { display: flex; gap: 4px; margin-bottom: 32px; flex-wrap: wrap; }
+    .tab-btn {
+      padding: 10px 20px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--gray-border);
+      background: transparent;
+      color: var(--gray-muted);
+      font-family: var(--font);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+    .tab-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+    .tab-btn:hover:not(.active) { color: var(--white); border-color: var(--gray-muted); }
+
+    /* محتوى التبويبات */
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ─── جدول الطلبات ─── */
+    .table-wrap {
+      background: var(--surface);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .table-toolbar {
+      padding: 18px 20px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      flex-wrap: wrap;
+    }
+    /* عدد الطلبات — يحدَّث بالـ JS */
+    .table-count { margin-right: auto; font-size: 13px; color: var(--gray-muted); }
+
+    /* نوع الطلب (حقيقي/وهمي) */
+    .order-type {
+      font-size: 11px; padding: 3px 8px; border-radius: 4px; font-weight: 600;
+    }
+    .type-real { background: rgba(16,185,129,0.1);  color: var(--success); }
+    .type-mock { background: rgba(107,114,128,0.2); color: var(--gray-muted); }
+
+    /* أزرار الإجراءات في الجدول */
+    .action-btns { display: flex; gap: 6px; }
+    .action-btn {
+      padding: 5px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      font-family: var(--font);
+      transition: all var(--transition);
+    }
+    .btn-view   { background: rgba(0,97,91,0.15); color: var(--primary-light); }
+    .btn-view:hover { background: rgba(0,97,91,0.3); }
+    .btn-assign { background: rgba(255,255,255,0.07); color: var(--gray-light); }
+    .btn-assign:hover { background: rgba(255,255,255,0.12); }
+
+    /* ─── تخطيط التقويم ─── */
+    .cal-layout {
+      display: grid;
+      grid-template-columns: 1fr 280px;
+      gap: 20px;
+    }
+    /* البطاقة الأم للتقويم */
+    .cal-grid {
+      background: var(--surface);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: var(--radius);
+      padding: 24px;
+    }
+    .cal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .cal-month { font-size: 17px; font-weight: 700; }
+    .cal-nav   { display: flex; gap: 8px; }
+    .cal-nav-btn {
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      border: 1px solid var(--gray-border);
+      background: transparent;
+      color: var(--gray-muted);
+      cursor: pointer;
+      font-size: 14px;
+      transition: all var(--transition);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .cal-nav-btn:hover { color: white; border-color: var(--gray-muted); }
+    /* رؤوس أيام الأسبوع */
+    .cal-days-header {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      margin-bottom: 8px;
+    }
+    .cal-day-name {
+      text-align: center;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--gray-muted);
+      padding: 6px 0;
+    }
+    /* شبكة أيام التقويم */
+    .cal-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+
+    /* بانل المواعيد على جانب التقويم */
+    .slots-panel {
+      background: var(--surface);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: var(--radius);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .slots-title { font-size: 15px; font-weight: 700; }
+    .slots-date  { font-size: 12px; color: var(--gray-muted); margin-bottom: 4px; }
+    /* موعد واحد */
+    .slot-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      border-radius: var(--radius-sm);
+      border: 1px solid rgba(255,255,255,0.06);
+      font-size: 13px;
+    }
+    .slot-time { font-weight: 600; }
+    /* شارة نوع الموعد */
+    .slot-badge { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 50px; }
+    .slot-online   { background: rgba(0,97,91,0.12);   color: var(--primary-light); }
+    .slot-physical { background: rgba(245,158,11,0.1); color: var(--warning); }
+    .slot-booked   { background: rgba(239,68,68,0.1);  color: var(--danger); }
+
+    /* ─── العقود ─── */
+    .contracts-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .contract-card {
+      background: var(--surface);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: var(--radius);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      transition: all var(--transition);
+    }
+    .contract-card:hover { border-color: rgba(0,97,91,0.3); }
+    .contract-icon  { font-size: 28px; }
+    .contract-name  { font-size: 15px; font-weight: 700; }
+    .contract-desc  { font-size: 13px; color: var(--gray-muted); line-height: 1.55; }
+    .contract-footer{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: auto;
+      padding-top: 12px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+    .contract-count { font-size: 12px; color: var(--gray-muted); }
+    /* زر صغير -->
+    */
+    .btn-small {
+      padding: 7px 14px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      background: rgba(0,97,91,0.12);
+      color: var(--primary-light);
+      border: 1px solid rgba(0,97,91,0.25);
+      cursor: pointer;
+      font-family: var(--font);
+      transition: all var(--transition);
+    }
+    .btn-small:hover { background: rgba(0,97,91,0.25); }
+
+    /* ─── قائمة التوقيعات المعلقة ─── */
+    .pending-sigs {
+      background: var(--surface);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .pending-header {
+      padding: 18px 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      font-size: 15px;
+      font-weight: 700;
+    }
+    .sig-item {
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    .sig-item:last-child { border-bottom: none; }
+    .sig-avatar {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: var(--primary);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 13px;
+    }
+    .sig-info   { flex: 1; }
+    .sig-name   { font-size: 14px; font-weight: 600; }
+    .sig-doc    { font-size: 12px; color: var(--gray-muted); }
+    .sig-status { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 50px; }
+    .sig-pending{ background: rgba(245,158,11,0.1); color: var(--warning); }
+    .sig-signed { background: rgba(16,185,129,0.1); color: var(--success); }
+    .sig-action {
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      background: var(--primary);
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-family: var(--font);
+      transition: all var(--transition);
+    }
+    .sig-action:hover  { background: var(--primary-light); }
+    .sig-action.ghost  { background: transparent; color: var(--gray-muted); border: 1px solid var(--gray-border); }
+
+    /* ─── إعدادات التنبيهات ─── */
+    .notif-settings {
+      background: var(--surface);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .notif-row {
+      display: flex;
+      align-items: center;
+      padding: 18px 24px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      gap: 16px;
+    }
+    .notif-row:last-child { border-bottom: none; }
+    .notif-icon { font-size: 22px; width: 36px; }
+    .notif-info { flex: 1; }
+    .notif-name { font-size: 14px; font-weight: 600; }
+    .notif-desc { font-size: 12px; color: var(--gray-muted); }
+    .notif-toggles { display: flex; gap: 16px; }
+    .toggle-group  { display: flex; align-items: center; gap: 8px; }
+    .toggle-label  { font-size: 11px; color: var(--gray-muted); }
+
+    /* ─── بوابة الدفع ─── */
+    .payment-preview {
+      background: var(--surface);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: var(--radius);
+      padding: 32px;
+      max-width: 480px;
+    }
+    .payment-preview h3 { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+    .payment-amount {
+      font-size: 36px;
+      font-weight: 900;
+      color: var(--primary-light);
+      margin-bottom: 24px;
+    }
+    .payment-methods { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+    .pm-label { font-size: 14px; font-weight: 600; }
+    .pm-sub   { font-size: 11px; color: var(--gray-muted); }
+    .pm-icon  { font-size: 22px; }
+    /* شارات التقسيط */
+    .bnpl-logos { display: flex; gap: 10px; align-items: center; margin-bottom: 20px; }
+    .bnpl-label { font-size: 12px; color: var(--gray-muted); }
+    .invoice-note { font-size: 12px; color: var(--gray-muted); margin-top: 14px; text-align: center; }
+
+    /* جدول المدفوعات */
+    .payments-table-wrap {
+      background: var(--surface);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: var(--radius);
+      overflow: hidden;
+      height: fit-content;
+    }
+    .payments-table-title {
+      padding: 18px 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      font-size: 15px;
+      font-weight: 700;
+    }
+    .payments-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
+  </style>
+</head>
+<body>
+
+<!-- ─── النافبار ─── -->
+<nav class="nav">
+  <a href="index.html" class="nav-logo">إبداع<span>.</span></a>
+  <ul class="nav-links">
+    <li><a href="#">الإدارة</a></li>
+    <li><a href="#">الفريق</a></li>
+    <li><a href="#">التقارير</a></li>
+  </ul>
+  <div class="nav-actions">
+    <button class="btn btn-ghost" onclick="window.location='index.html'">تسجيل الخروج</button>
+  </div>
+</nav>
+
+<div class="dash-layout">
+
+  <!-- ═══ السايدبار ═══ -->
+  <aside class="sidebar">
+    <!-- معلومات المدير -->
+    <div class="sidebar-user">
+      <div class="user-avatar" style="background:var(--gray-mid)">س</div>
+      <div class="user-name">سارة العتيبي</div>
+      <!-- الصلاحيات: مدير أو موظف/مصمم -->
+      <div class="user-role">مدير — صلاحية كاملة</div>
+    </div>
+
+    <!-- قائمة الإدارة -->
+    <ul class="sidebar-nav">
+      <li><a href="#" class="active"><span class="icon">📊</span> الإحصائيات</a></li>
+      <li><a href="#" onclick="switchTab('orders',   document.querySelector('.tab-btn')); return false"><span class="icon">📋</span> الطلبات</a></li>
+      <li><a href="#" onclick="switchTab('calendar', document.querySelectorAll('.tab-btn')[1]); return false"><span class="icon">📅</span> المواعيد</a></li>
+      <li><a href="#" onclick="switchTab('contracts',document.querySelectorAll('.tab-btn')[2]); return false"><span class="icon">📄</span> العقود</a></li>
+      <li><a href="#" onclick="switchTab('notifs',   document.querySelectorAll('.tab-btn')[3]); return false"><span class="icon">🔔</span> التنبيهات</a></li>
+      <li><a href="#" onclick="switchTab('payments', document.querySelectorAll('.tab-btn')[4]); return false"><span class="icon">💳</span> المالية</a></li>
+      <li><a href="#"><span class="icon">👥</span> الفريق</a></li>
+    </ul>
+  </aside>
+
+  <!-- ═══ المحتوى ═══ -->
+  <main class="dash-main">
+
+    <div class="dash-header">
+      <div>
+        <div class="dash-title">لوحة الإدارة</div>
+        <!-- في الحقيقة: اعرض التاريخ الحقيقي بالـ JS -->
+        <div class="dash-sub">الجمعة، 27 يونيو 2025 — نظرة شاملة</div>
+      </div>
+      <button class="btn btn-primary">+ طلب جديد</button>
+    </div>
+
+    <!-- ═══ إحصائيات عامة ═══ -->
+    <!-- في الحقيقة: اجلب من: GET /api/dashboard/stats -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-card-label">إجمالي الطلبات</div>
+        <div class="stat-card-value">48</div>
+        <div class="stat-card-sub">↑ 12 هذا الشهر</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">قيد التنفيذ</div>
+        <div class="stat-card-value amber">14</div>
+        <div class="stat-card-sub">5 بانتظار العميل</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">الإيرادات — يونيو</div>
+        <!-- عدّل العملة والمبلغ -->
+        <div class="stat-card-value green">84,500</div>
+        <div class="stat-card-sub">ريال سعودي</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">مواعيد الأسبوع</div>
+        <div class="stat-card-value">7</div>
+        <div class="stat-card-sub">3 أونلاين • 4 حضوري</div>
+      </div>
+    </div>
+
+    <!-- ═══ التبويبات ═══ -->
+    <div class="admin-tabs">
+      <button class="tab-btn active" onclick="switchTab('orders',   this)">📋 الطلبات</button>
+      <button class="tab-btn"        onclick="switchTab('calendar', this)">📅 المواعيد</button>
+      <button class="tab-btn"        onclick="switchTab('contracts',this)">📄 العقود</button>
+      <button class="tab-btn"        onclick="switchTab('notifs',   this)">🔔 التنبيهات</button>
+      <button class="tab-btn"        onclick="switchTab('payments', this)">💳 الدفع</button>
+    </div>
+
+    <!-- ══════════════════════════════════
+         تبويب 1: الطلبات
+         ══════════════════════════════════ -->
+    <div class="tab-panel active" id="tab-orders">
+      <div class="table-wrap">
+        <div class="table-toolbar">
+          <!-- البحث: يفلتر الجدول فوراً (في الحقيقة: يرسل API call) -->
+          <input class="search-input" placeholder="🔍  ابحث عن طلب أو عميل..." oninput="filterTable(this.value)">
+
+          <!-- فلتر الحالة -->
+          <select class="filter-select" onchange="filterStatus(this.value)">
+            <option value="">جميع الحالات</option>
+            <option>جديد</option>
+            <option>قيد العمل</option>
+            <option>بانتظار العميل</option>
+            <option>مكتمل</option>
+          </select>
+
+          <!-- فلتر النوع (حقيقي/وهمي) -->
+          <select class="filter-select" id="typeFilter" onchange="filterType(this.value)">
+            <option value="">النوع: الكل</option>
+            <option value="حقيقي">حقيقي</option>
+            <option value="وهمي">وهمي</option>
+          </select>
+
+          <div class="table-count" id="rowCount">6 طلبات</div>
+        </div>
+
+        <!--
+          الجدول الرئيسي
+          في الحقيقة: اجلب البيانات من: GET /api/orders
+          وارسم الصفوف بالـ JavaScript ديناميكياً
+        -->
+        <table id="ordersTable">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>العميل</th>
+              <th>نوع الخدمة</th>
+              <th>النوع</th>
+              <th>الحالة</th>
+              <th>المصمم المسؤول</th> <!-- في الحقيقة: قائمة منسدلة لتعيين مصمم -->
+              <th>التاريخ</th>
+              <th>إجراء</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- صفوف الجدول — في الحقيقة: تُولَّد من API بحلقة JS -->
+            <!-- بيانات وهمية للعرض فقط — استبدلها بـ fetch() لاحقاً -->
+            <tr>
+              <td>#1048</td>
+              <td>محمد الشمري</td>
+              <td>هوية بصرية كاملة</td>
+              <td><span class="order-type type-real">حقيقي</span></td>
+              <td><span class="order-status status-inprogress">قيد العمل</span></td>
+              <td>أحمد الغامدي</td>
+              <td>15 مايو</td>
+              <td>
+                <div class="action-btns">
+                  <button class="action-btn btn-view"   onclick="viewOrder(1048)">عرض</button>
+                  <button class="action-btn btn-assign" onclick="assignOrder(1048)">تعيين</button>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>#1047</td>
+              <td>شركة نور</td>
+              <td>تصميم تغليف</td>
+              <td><span class="order-type type-real">حقيقي</span></td>
+              <td><span class="order-status status-waiting">بانتظار العميل</span></td>
+              <td>ريم السيف</td>
+              <td>12 مايو</td>
+              <td>
+                <div class="action-btns">
+                  <button class="action-btn btn-view"   onclick="viewOrder(1047)">عرض</button>
+                  <button class="action-btn btn-assign" onclick="assignOrder(1047)">تعيين</button>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>#1046</td>
+              <td>متجر لمسة</td>
+              <td>سوشيال ميديا</td>
+              <td><span class="order-type type-mock">وهمي</span></td>
+              <td><span class="order-status status-new">جديد</span></td>
+              <td>—</td>
+              <td>10 مايو</td>
+              <td>
+                <div class="action-btns">
+                  <button class="action-btn btn-view"   onclick="viewOrder(1046)">عرض</button>
+                  <button class="action-btn btn-assign" onclick="assignOrder(1046)">تعيين</button>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>#1045</td>
+              <td>د. سلمى القحطاني</td>
+              <td>موقع إلكتروني</td>
+              <td><span class="order-type type-real">حقيقي</span></td>
+              <td><span class="order-status status-done">مكتمل</span></td>
+              <td>فيصل المطيري</td>
+              <td>2 مايو</td>
+              <td>
+                <div class="action-btns">
+                  <button class="action-btn btn-view" onclick="viewOrder(1045)">عرض</button>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>#1044</td>
+              <td>مطعم سيتشيو</td>
+              <td>هوية + تغليف</td>
+              <td><span class="order-type type-real">حقيقي</span></td>
+              <td><span class="order-status status-done">مكتمل</span></td>
+              <td>أحمد الغامدي</td>
+              <td>28 أبريل</td>
+              <td>
+                <div class="action-btns">
+                  <button class="action-btn btn-view" onclick="viewOrder(1044)">عرض</button>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>#1043</td>
+              <td>شركة برايم</td>
+              <td>استشارة استراتيجية</td>
+              <td><span class="order-type type-real">حقيقي</span></td>
+              <td><span class="order-status status-inprogress">قيد العمل</span></td>
+              <td>سارة العتيبي</td>
+              <td>25 أبريل</td>
+              <td>
+                <div class="action-btns">
+                  <button class="action-btn btn-view"   onclick="viewOrder(1043)">عرض</button>
+                  <button class="action-btn btn-assign" onclick="assignOrder(1043)">تعيين</button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════
+         تبويب 2: المواعيد
+         ══════════════════════════════════ -->
+    <div class="tab-panel" id="tab-calendar">
+      <!--
+        في الحقيقة: استخدم مكتبة تقويم مثل:
+        - FullCalendar (مجانية ومفتوحة المصدر)
+        - Cal.com (مفتوح المصدر كامل)
+        أو اربط بـ: GET /api/appointments?month=6&year=2025
+      -->
+      <div class="cal-layout">
+        <!-- التقويم -->
+        <div class="cal-grid">
+          <div class="cal-header">
+            <div class="cal-month">يونيو 2025</div>
+            <div class="cal-nav">
+              <button class="cal-nav-btn" title="الشهر التالي">→</button>
+              <button class="cal-nav-btn" title="الشهر السابق">←</button>
+            </div>
+          </div>
+          <!-- رؤوس أيام الأسبوع -->
+          <div class="cal-days-header">
+            <div class="cal-day-name">أح</div>
+            <div class="cal-day-name">اث</div>
+            <div class="cal-day-name">ث</div>
+            <div class="cal-day-name">أر</div>
+            <div class="cal-day-name">خ</div>
+            <div class="cal-day-name">ج</div>
+            <div class="cal-day-name">س</div>
+          </div>
+          <!-- الأيام — تُبنى بالـ JavaScript -->
+          <div class="cal-days" id="calDays"></div>
+        </div>
+
+        <!-- مواعيد اليوم المحدد -->
+        <div class="slots-panel">
+          <div class="slots-title">الأربعاء 25 يونيو</div>
+          <div class="slots-date">المواعيد المتاحة والمحجوزة</div>
+
+          <!-- موعد — نوع: أونلاين (متاح) -->
+          <div class="slot-item">
+            <span class="slot-time">9:00 ص</span>
+            <span class="slot-badge slot-online">أونلاين</span>
+          </div>
+          <!-- موعد — محجوز -->
+          <div class="slot-item">
+            <span class="slot-time">10:00 ص</span>
+            <span class="slot-badge slot-booked">محجوز — محمد</span>
+          </div>
+          <div class="slot-item">
+            <span class="slot-time">11:00 ص</span>
+            <span class="slot-badge slot-physical">حضوري</span>
+          </div>
+          <div class="slot-item">
+            <span class="slot-time">1:00 م</span>
+            <span class="slot-badge slot-online">أونلاين</span>
+          </div>
+          <div class="slot-item">
+            <span class="slot-time">3:00 م</span>
+            <span class="slot-badge slot-booked">محجوز — نور</span>
+          </div>
+          <div class="slot-item">
+            <span class="slot-time">4:30 م</span>
+            <span class="slot-badge slot-physical">حضوري</span>
+          </div>
+
+          <!-- زر إضافة موعد جديد -->
+          <button class="btn btn-primary" style="width:100%; justify-content:center; margin-top:8px"
+            onclick="alert('في الحقيقة: افتح نموذج إضافة موعد — POST /api/appointments')">
+            + إضافة موعد
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════
+         تبويب 3: العقود
+         ══════════════════════════════════ -->
+    <div class="tab-panel" id="tab-contracts">
+      <!--
+        في الحقيقة: ربط بـ DocuSign API أو Adobe Sign
+        أو مكتبة PDF signing مفتوحة المصدر
+        كل عقد: GET /api/contracts/:id/download
+        إرسال للتوقيع: POST /api/contracts/:id/send
+      -->
+      <div class="contracts-grid">
+        <!-- بطاقة عقد — انسخها لإضافة نوع عقد جديد -->
+        <div class="contract-card">
+          <div class="contract-icon">🔒</div>
+          <div class="contract-name">اتفاقية عدم الإفصاح (NDA)</div>
+          <div class="contract-desc">حماية المعلومات السرية للمشروع قبل بدء أي مرحلة تصميمية.</div>
+          <div class="contract-footer">
+            <div class="contract-count">38 نسخة موقّعة</div>
+            <button class="btn-small" onclick="alert('رفع نموذج NDA — PUT /api/templates/nda')">رفع نسخة</button>
+          </div>
+        </div>
+        <div class="contract-card">
+          <div class="contract-icon">📝</div>
+          <div class="contract-name">عقد الخدمات</div>
+          <div class="contract-desc">العقد الرئيسي الذي يحدد نطاق العمل، المدة، والمستحقات المالية.</div>
+          <div class="contract-footer">
+            <div class="contract-count">41 عقد نشط</div>
+            <button class="btn-small" onclick="alert('رفع نموذج عقد — PUT /api/templates/service')">رفع نموذج</button>
+          </div>
+        </div>
+        <div class="contract-card">
+          <div class="contract-icon">✏️</div>
+          <div class="contract-name">اتفاقية التعديلات</div>
+          <div class="contract-desc">توثيق أي تعديلات خارج نطاق العمل مع تحديد تكلفتها.</div>
+          <div class="contract-footer">
+            <div class="contract-count">12 اتفاقية</div>
+            <button class="btn-small">رفع نموذج</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- قائمة التوقيعات المعلقة -->
+      <!-- في الحقيقة: GET /api/contracts?status=pending -->
+      <div class="pending-sigs">
+        <div class="pending-header">⏳ بانتظار التوقيع الإلكتروني</div>
+
+        <div class="sig-item">
+          <div class="sig-avatar">م</div>
+          <div class="sig-info">
+            <div class="sig-name">محمد الشمري</div>
+            <div class="sig-doc">NDA — مشروع هوية بصرية</div>
+          </div>
+          <span class="sig-status sig-pending">بانتظار التوقيع</span>
+          <!-- في الحقيقة: POST /api/contracts/:id/remind → يرسل SMS/Email -->
+          <button class="sig-action" onclick="alert('تم إرسال تذكير SMS وEmail')">إرسال تذكير</button>
+        </div>
+
+        <div class="sig-item">
+          <div class="sig-avatar">ن</div>
+          <div class="sig-info">
+            <div class="sig-name">شركة نور</div>
+            <div class="sig-doc">عقد خدمات — تصميم التغليف</div>
+          </div>
+          <span class="sig-status sig-signed">موقّع ✓</span>
+          <!-- في الحقيقة: GET /api/contracts/:id/download → PDF -->
+          <button class="sig-action ghost" onclick="alert('تنزيل PDF الموقّع')">تحميل</button>
+        </div>
+
+        <div class="sig-item">
+          <div class="sig-avatar">ل</div>
+          <div class="sig-info">
+            <div class="sig-name">متجر لمسة</div>
+            <div class="sig-doc">NDA — مشروع سوشيال ميديا</div>
+          </div>
+          <span class="sig-status sig-pending">بانتظار التوقيع</span>
+          <button class="sig-action" onclick="alert('تم إرسال تذكير')">إرسال تذكير</button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════
+         تبويب 4: التنبيهات
+         ══════════════════════════════════ -->
+    <div class="tab-panel" id="tab-notifs">
+      <!--
+        في الحقيقة: احفظ إعدادات التنبيهات في جدول settings
+        عند التغيير: PATCH /api/settings/notifications
+        الإرسال الفعلي: Twilio (SMS) / SendGrid (Email)
+      -->
+      <div class="notif-settings">
+
+        <!-- صف تنبيه — انسخه لإضافة تنبيه جديد -->
+        <div class="notif-row">
+          <div class="notif-icon">📋</div>
+          <div class="notif-info">
+            <div class="notif-name">تحديث حالة الطلب</div>
+            <div class="notif-desc">عند تغيير حالة الطلب أو الانتقال لمرحلة جديدة</div>
+          </div>
+          <div class="notif-toggles">
+            <div class="toggle-group">
+              <span class="toggle-label">SMS</span>
+              <div class="toggle on"></div>
+            </div>
+            <div class="toggle-group">
+              <span class="toggle-label">Email</span>
+              <div class="toggle on"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="notif-row">
+          <div class="notif-icon">📅</div>
+          <div class="notif-info">
+            <div class="notif-name">تذكير المواعيد</div>
+            <div class="notif-desc">تنبيه قبل 24 ساعة وقبل ساعة من الموعد</div>
+          </div>
+          <div class="notif-toggles">
+            <div class="toggle-group">
+              <span class="toggle-label">SMS</span>
+              <div class="toggle on"></div>
+            </div>
+            <div class="toggle-group">
+              <span class="toggle-label">Email</span>
+              <div class="toggle"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="notif-row">
+          <div class="notif-icon">✍️</div>
+          <div class="notif-info">
+            <div class="notif-name">طلب توقيع العقود</div>
+            <div class="notif-desc">عند إرسال عقد جديد للعميل للتوقيع الإلكتروني</div>
+          </div>
+          <div class="notif-toggles">
+            <div class="toggle-group">
+              <span class="toggle-label">SMS</span>
+              <div class="toggle on"></div>
+            </div>
+            <div class="toggle-group">
+              <span class="toggle-label">Email</span>
+              <div class="toggle on"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="notif-row">
+          <div class="notif-icon">🔔</div>
+          <div class="notif-info">
+            <div class="notif-name">طلب اعتماد العميل</div>
+            <div class="notif-desc">عند رفع مصمم لملف يحتاج موافقة العميل</div>
+          </div>
+          <div class="notif-toggles">
+            <div class="toggle-group">
+              <span class="toggle-label">SMS</span>
+              <div class="toggle on"></div>
+            </div>
+            <div class="toggle-group">
+              <span class="toggle-label">Email</span>
+              <div class="toggle on"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="notif-row">
+          <div class="notif-icon">💬</div>
+          <div class="notif-info">
+            <div class="notif-name">رسائل جديدة في المحادثة</div>
+            <div class="notif-desc">عند وصول رسالة من العميل أو الموظف</div>
+          </div>
+          <div class="notif-toggles">
+            <div class="toggle-group">
+              <span class="toggle-label">SMS</span>
+              <div class="toggle"></div>
+            </div>
+            <div class="toggle-group">
+              <span class="toggle-label">Email</span>
+              <div class="toggle on"></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════
+         تبويب 5: الدفع والمالية
+         ══════════════════════════════════ -->
+    <div class="tab-panel" id="tab-payments">
+      <!--
+        بوابات الدفع المقترحة للسعودية:
+        - HyperPay: يدعم مدى + فيزا + ماستر + Apple Pay
+        - Tap Payments: خيار شائع في الخليج
+        - Tamara API: للتقسيط (موثق رسمياً)
+        - Tabby API:  للتقسيط (موثق رسمياً)
+      -->
+      <div class="payments-grid">
+
+        <!-- نموذج الدفع -->
+        <div class="payment-preview">
+          <h3>بوابة الدفع</h3>
+          <div style="font-size:12px; color:var(--gray-muted); margin-bottom:12px">
+            طلب #1048 — محمد الشمري
+          </div>
+          <!-- المبلغ — في الحقيقة: يجي من الطلب -->
+          <div class="payment-amount">4,500 ر.س</div>
+
+          <div style="font-size:13px; font-weight:600; margin-bottom:12px; color:var(--gray-muted)">
+            اختر طريقة الدفع
+          </div>
+
+          <div class="payment-methods">
+            <!-- طريقة 1 -->
+            <div class="pm-option selected">
+              <input type="radio" name="pm" checked>
+              <div class="pm-icon">🍎</div>
+              <div>
+                <div class="pm-label">Apple Pay</div>
+                <div class="pm-sub">الدفع السريع</div>
+              </div>
+            </div>
+            <!-- طريقة 2 -->
+            <div class="pm-option">
+              <input type="radio" name="pm">
+              <div class="pm-icon">💳</div>
+              <div>
+                <div class="pm-label">بطاقة ائتمانية</div>
+                <div class="pm-sub">فيزا / ماستر كارد</div>
+              </div>
+            </div>
+            <!-- طريقة 3 -->
+            <div class="pm-option">
+              <input type="radio" name="pm">
+              <div class="pm-icon">🏧</div>
+              <div>
+                <div class="pm-label">مدى</div>
+                <div class="pm-sub">البطاقة المحلية</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- خدمات التقسيط -->
+          <div style="font-size:12px; font-weight:600; margin-bottom:8px; color:var(--gray-muted)">
+            أو قسّم دفعتك مع
+          </div>
+          <div class="bnpl-logos">
+            <!-- شعار Tamara — استبدله بصورة الشعار الحقيقية -->
+            <div class="bnpl-badge bnpl-tamara">Tamara</div>
+            <!-- شعار Tabby -->
+            <div class="bnpl-badge bnpl-tabby">Tabby</div>
+            <span class="bnpl-label">3 أقساط بدون فوائد</span>
+          </div>
+
+          <!-- زر الدفع — في الحقيقة: يرسل POST /api/payments/initiate -->
+          <button class="btn btn-primary" style="width:100%; justify-content:center; padding:14px"
+            onclick="alert('سيتم التحويل لبوابة الدفع — اربط بـ HyperPay أو Tap')">
+            ادفع الآن — 4,500 ر.س
+          </button>
+          <!-- الفاتورة ترسل تلقائياً بعد نجاح الدفع عبر Webhook -->
+          <div class="invoice-note">🧾 فاتورة رقمية ترسل تلقائياً بعد الدفع</div>
+        </div>
+
+        <!-- سجل المدفوعات السابقة -->
+        <!-- في الحقيقة: GET /api/payments?status=completed -->
+        <div class="payments-table-wrap">
+          <div class="payments-table-title">سجل المدفوعات</div>
+          <table>
+            <thead>
+              <tr>
+                <th>العميل</th>
+                <th>المبلغ</th>
+                <th>الطريقة</th>
+                <th>التاريخ</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>مطعم سيتشيو</td>
+                <td style="color:var(--success)">8,200</td>
+                <td>Apple Pay</td>
+                <td>28 أبريل</td>
+              </tr>
+              <tr>
+                <td>د. سلمى</td>
+                <td style="color:var(--success)">6,500</td>
+                <td>بطاقة</td>
+                <td>2 مايو</td>
+              </tr>
+              <tr>
+                <td>شركة نور</td>
+                <!-- قسط 1 من 3 -->
+                <td style="color:var(--warning)">2,000 <small>(1/3)</small></td>
+                <td>Tamara</td>
+                <td>12 مايو</td>
+              </tr>
+              <tr>
+                <td>برايم</td>
+                <td style="color:var(--success)">12,000</td>
+                <td>مدى</td>
+                <td>15 مايو</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script src="js/main.js"></script>
+
+<script>
+  /* ─── دوال خاصة بصفحة الإدارة ─── */
+
+  /**
+   * دالة التبديل بين التبويبات
+   * (موجودة هنا بدلاً من main.js لأن اسم التبويبات مختلف)
+   */
+  function switchTab(tabName, clickedBtn) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    const panel = document.getElementById('tab-' + tabName);
+    if (panel) panel.classList.add('active');
+    if (clickedBtn) clickedBtn.classList.add('active');
+  }
+
+  /**
+   * عرض تفاصيل الطلب
+   * في الحقيقة: افتح صفحة /orders/:id أو modal
+   */
+  function viewOrder(id) {
+    alert(`عرض الطلب #${id}\nفي الحقيقة: window.location = '/admin/orders/${id}'`);
+  }
+
+  /**
+   * تعيين مصمم للطلب
+   * في الحقيقة: افتح قائمة الموظفين ثم PATCH /api/orders/:id { designer_id }
+   */
+  function assignOrder(id) {
+    const designer = prompt('أدخل اسم المصمم أو معرّفه:');
+    if (designer) {
+      alert(`تم تعيين "${designer}" للطلب #${id}\nفي الحقيقة: PATCH /api/orders/${id}`);
+    }
+  }
+
+  /**
+   * فلترة بالنوع (حقيقي/وهمي)
+   */
+  function filterType(val) {
+    const rows = document.querySelectorAll('#ordersTable tbody tr');
+    rows.forEach(row => {
+      const show = !val || row.textContent.includes(val);
+      row.style.display = show ? '' : 'none';
+    });
+    updateRowCount();
+  }
+
+  /**
+   * تحديث عداد عدد الصفوف الظاهرة
+   */
+  function updateRowCount() {
+    const visible = [...document.querySelectorAll('#ordersTable tbody tr')]
+      .filter(r => r.style.display !== 'none').length;
+    const counter = document.getElementById('rowCount');
+    if (counter) counter.textContent = `${visible} طلبات`;
+  }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,620 @@
+/* =====================================================
+   ملف التنسيق الرئيسي — style.css
+   كل الألوان والخطوط والتصميم موجودة هنا
+   =====================================================
+
+   كيف تعدّل الألوان؟
+   ابحث عن --primary وغيّر الكود اللوني
+   مثال: --primary: #00615B → --primary: #FF0000 (أحمر)
+   ===================================================== */
+
+/* ── المتغيرات العامة (الألوان والإعدادات الأساسية) ── */
+:root {
+  /* اللون الأساسي — غيّره من هنا وسيتغير في كل المنصة */
+  --primary:       #00615B;
+  --primary-light: #00877f;
+  --primary-glow:  rgba(0, 97, 91, 0.15);
+
+  /* الخلفيات */
+  --black:      #0a0a0a;   /* أسود الصفحة الرئيسية */
+  --surface:    #111111;   /* بطاقات وعناصر داخل الصفحة */
+  --surface2:   #161616;   /* طبقة ثانية للعناصر */
+
+  /* الرماديات */
+  --gray-dark:   #1a1a1a;
+  --gray-mid:    #2e2e2e;
+  --gray-border: #3a3a3a;
+  --gray-light:  #E4E4E4;  /* اللون الرمادي الرسمي من الهوية */
+  --gray-muted:  #888888;  /* النصوص الثانوية الخافتة */
+
+  --white: #ffffff;
+
+  /* ألوان الحالات */
+  --success: #10b981;  /* أخضر — مكتمل */
+  --warning: #f59e0b;  /* أصفر — بانتظار */
+  --danger:  #ef4444;  /* أحمر — خطأ أو رفض */
+
+  /* الخط — غيّره من هنا إذا أردت خطاً آخر */
+  --font: 'Tajawal', sans-serif;
+
+  /* الزوايا المستديرة */
+  --radius:    12px;
+  --radius-sm: 8px;
+
+  /* الظل */
+  --shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+
+  /* سرعة الأنيميشن */
+  --transition: 0.25s ease;
+}
+
+/* ── إعادة ضبط افتراضيات المتصفح ── */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* ── الجسم الرئيسي ── */
+body {
+  font-family: var(--font);
+  background: var(--black);
+  color: var(--white);
+  overflow-x: hidden;
+  font-size: 15px;
+  line-height: 1.6;
+  /* direction: rtl مكتوبة في الـ HTML */
+}
+
+/* =====================================================
+   شريط التنقل العلوي
+   ===================================================== */
+.nav {
+  position: fixed;
+  top: 0; right: 0; left: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 48px;
+  height: 68px;
+  background: rgba(10, 10, 10, 0.85);
+  backdrop-filter: blur(12px); /* ضبابية زجاجية */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* الشعار */
+.nav-logo {
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--white);
+  letter-spacing: -0.5px;
+  text-decoration: none;
+}
+/* النقطة الملونة بجانب الشعار */
+.nav-logo span { color: var(--primary); }
+
+/* روابط التنقل */
+.nav-links {
+  display: flex;
+  gap: 32px;
+  list-style: none;
+}
+.nav-links a {
+  color: var(--gray-muted);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  transition: color var(--transition);
+}
+.nav-links a:hover { color: var(--white); }
+
+/* أزرار جانب النافيجيشن */
+.nav-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+/* =====================================================
+   الأزرار — أنواع مختلفة
+   ===================================================== */
+
+/* الزر الأساسي */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 22px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all var(--transition);
+  text-decoration: none;
+}
+
+/* زر شفاف */
+.btn-ghost {
+  background: transparent;
+  color: var(--gray-muted);
+  border: 1px solid var(--gray-border);
+}
+.btn-ghost:hover {
+  color: var(--white);
+  border-color: var(--gray-muted);
+}
+
+/* زر ملون (الأساسي) */
+.btn-primary {
+  background: var(--primary);
+  color: var(--white);
+}
+.btn-primary:hover {
+  background: var(--primary-light);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(0, 97, 91, 0.3);
+}
+
+/* زر كبير */
+.btn-lg {
+  padding: 14px 32px;
+  font-size: 16px;
+  border-radius: var(--radius);
+}
+
+/* زر بإطار */
+.btn-outline {
+  background: transparent;
+  color: var(--primary);
+  border: 1px solid var(--primary);
+}
+.btn-outline:hover { background: var(--primary-glow); }
+
+/* =====================================================
+   السايدبار (القائمة الجانبية)
+   ===================================================== */
+.sidebar {
+  background: var(--surface);
+  border-left: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 28px 0;
+  position: sticky;
+  top: 68px;
+  height: calc(100vh - 68px);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+/* معلومات المستخدم في أعلى السايدبار */
+.sidebar-user {
+  padding: 0 20px 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  margin-bottom: 16px;
+}
+
+/* صورة/رمز المستخدم الدائرية */
+.user-avatar {
+  width: 44px;
+  height: 44px;
+  background: var(--primary);  /* غيّر اللون من هنا */
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 16px;
+  color: white;
+  margin-bottom: 10px;
+}
+
+.user-name  { font-weight: 700; font-size: 15px; }
+.user-role  { font-size: 12px; color: var(--gray-muted); }
+
+/* روابط السايدبار */
+.sidebar-nav { list-style: none; padding: 0 10px; flex: 1; }
+.sidebar-nav li { margin-bottom: 3px; }
+.sidebar-nav a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  color: var(--gray-muted);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all var(--transition);
+}
+/* الرابط النشط حالياً */
+.sidebar-nav a:hover,
+.sidebar-nav a.active {
+  background: var(--primary-glow);
+  color: var(--white);
+}
+.sidebar-nav a.active  { color: var(--primary-light); }
+.sidebar-nav .icon     { font-size: 16px; width: 20px; text-align: center; }
+
+/* الشارة الحمراء للإشعارات في السايدبار */
+.nav-badge {
+  margin-right: auto;
+  background: var(--primary);
+  color: white;
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 50px;
+  font-weight: 700;
+}
+
+/* =====================================================
+   الشريط السفلي للتبديل بين الواجهات (للتجربة فقط)
+   في المشروع الحقيقي: احذف هذا القسم
+   ===================================================== */
+.view-bar {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 200;
+  display: flex;
+  gap: 6px;
+  background: rgba(20, 20, 20, 0.95);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--gray-border);
+  border-radius: 50px;
+  padding: 6px;
+}
+.view-btn {
+  padding: 8px 20px;
+  border-radius: 50px;
+  border: none;
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+  color: var(--gray-muted);
+  background: transparent;
+}
+.view-btn.active { background: var(--primary); color: var(--white); }
+.view-btn:hover:not(.active) { color: var(--white); }
+
+/* =====================================================
+   البطاقات العامة
+   ===================================================== */
+.card {
+  background: var(--surface);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius);
+  padding: 28px;
+}
+.card-title {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* =====================================================
+   شريط البحث والفلترة (الجداول)
+   ===================================================== */
+.search-input,
+.filter-select {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--gray-border);
+  border-radius: var(--radius-sm);
+  padding: 8px 14px;
+  color: var(--white);
+  font-family: var(--font);
+  font-size: 13px;
+  outline: none;
+  transition: border-color var(--transition);
+}
+.search-input { width: 240px; }
+.search-input:focus,
+.filter-select:focus { border-color: var(--primary); }
+.search-input::placeholder { color: var(--gray-muted); }
+.filter-select option { background: var(--gray-dark); }
+.filter-select { cursor: pointer; }
+
+/* =====================================================
+   الجداول
+   ===================================================== */
+table { width: 100%; border-collapse: collapse; }
+th {
+  text-align: right;
+  padding: 12px 20px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--gray-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.02);
+}
+td {
+  padding: 14px 20px;
+  font-size: 13.5px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+tr:last-child td { border-bottom: none; }
+tr:hover td     { background: rgba(255, 255, 255, 0.02); }
+
+/* ─── حالات الطلبات (شارات الألوان) ─── */
+/* لتعديل النص: ابحث عن "جديد" أو "مكتمل" في ملف HTML */
+.order-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 50px;
+}
+.order-status::before {
+  content: '';
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.status-new        { background: rgba(0,97,91,0.12);    color: var(--primary-light); }
+.status-inprogress { background: rgba(245,158,11,0.1);  color: var(--warning); }
+.status-waiting    { background: rgba(99,102,241,0.1);  color: #818cf8; }
+.status-done       { background: rgba(16,185,129,0.1);  color: var(--success); }
+
+/* =====================================================
+   مفاتيح التشغيل/إيقاف (Toggle)
+   ===================================================== */
+.toggle {
+  width: 36px;
+  height: 20px;
+  background: var(--gray-border);
+  border-radius: 50px;
+  position: relative;
+  cursor: pointer;
+  transition: background var(--transition);
+  flex-shrink: 0;
+}
+/* الدائرة البيضاء داخل المفتاح */
+.toggle::after {
+  content: '';
+  position: absolute;
+  top: 3px; right: 3px;
+  width: 14px; height: 14px;
+  background: white;
+  border-radius: 50%;
+  transition: transform var(--transition);
+}
+/* عندما يكون مشغّلاً */
+.toggle.on { background: var(--primary); }
+.toggle.on::after { transform: translateX(-16px); }
+
+/* =====================================================
+   الشات / المحادثة
+   ===================================================== */
+.chat-container { display: flex; flex-direction: column; height: 380px; }
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 16px;
+  padding-left: 4px;
+}
+/* فقاعة الرسالة */
+.msg { display: flex; gap: 10px; align-items: flex-end; }
+.msg.mine { flex-direction: row-reverse; }  /* رسائل المستخدم على اليسار */
+
+.msg-avatar {
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+}
+.msg-avatar.staff  { background: var(--primary); color: white; }  /* لون الموظف */
+.msg-avatar.client { background: var(--gray-mid); color: white; } /* لون العميل */
+
+.msg-bubble {
+  max-width: 72%;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 13.5px;
+  line-height: 1.55;
+}
+/* رسائل الطرف الآخر */
+.msg.theirs .msg-bubble {
+  background: var(--surface2);
+  border-radius: 4px 12px 12px 12px;
+}
+/* رسائلي أنا */
+.msg.mine .msg-bubble {
+  background: var(--primary);  /* غيّر لون فقاعة رسائلك */
+  border-radius: 12px 4px 12px 12px;
+}
+.msg-time { font-size: 10px; color: var(--gray-muted); margin-top: 3px; }
+
+/* حقل الكتابة */
+.chat-input {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--gray-border);
+  border-radius: var(--radius-sm);
+  padding: 10px 16px;
+  color: var(--white);
+  font-family: var(--font);
+  font-size: 14px;
+  outline: none;
+  transition: border-color var(--transition);
+}
+.chat-input:focus { border-color: var(--primary); }
+.chat-input::placeholder { color: var(--gray-muted); }
+
+/* زر الإرسال */
+.chat-send-btn {
+  width: 42px; height: 42px;
+  background: var(--primary);
+  border: none;
+  border-radius: var(--radius-sm);
+  color: white;
+  font-size: 18px;
+  cursor: pointer;
+  transition: all var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.chat-send-btn:hover { background: var(--primary-light); }
+
+/* =====================================================
+   الشريط الزمني (Timeline)
+   ===================================================== */
+.timeline {
+  display: flex;
+  position: relative;
+  padding-bottom: 12px;
+}
+/* الخط الأفقي خلف النقاط */
+.timeline::before {
+  content: '';
+  position: absolute;
+  top: 18px; right: 18px; left: 18px;
+  height: 2px;
+  background: var(--gray-border);
+}
+.timeline-step {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+  z-index: 1;
+}
+/* النقطة الدائرية */
+.step-dot {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  border: 2px solid;
+  background: var(--black);
+}
+.step-dot.done    { border-color: var(--primary); background: var(--primary); color: white; }
+.step-dot.active  { border-color: var(--primary); color: var(--primary); box-shadow: 0 0 0 4px rgba(0,97,91,0.2); }
+.step-dot.pending { border-color: var(--gray-border); color: var(--gray-muted); }
+
+/* =====================================================
+   سجل الإصدارات
+   ===================================================== */
+.version-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 18px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.version-item:hover {
+  border-color: rgba(0, 97, 91, 0.3);
+  background: rgba(0, 97, 91, 0.05);
+}
+.version-badge {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--primary-light);
+  background: rgba(0, 97, 91, 0.12);
+  border: 1px solid rgba(0, 97, 91, 0.25);
+  padding: 4px 10px;
+  border-radius: 6px;
+  min-width: 40px;
+  text-align: center;
+}
+
+/* =====================================================
+   تقويم المواعيد
+   ===================================================== */
+.cal-day {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all var(--transition);
+  position: relative;
+}
+.cal-day:hover   { background: rgba(255, 255, 255, 0.06); }
+/* نقطة تحت الأيام التي فيها مواعيد */
+.cal-day.has-event::after {
+  content: '';
+  position: absolute;
+  bottom: 4px;
+  width: 4px; height: 4px;
+  background: var(--primary);
+  border-radius: 50%;
+}
+.cal-day.today    { background: var(--primary-glow); color: var(--primary-light); font-weight: 700; }
+.cal-day.selected { background: var(--primary); color: white; font-weight: 700; }
+
+/* =====================================================
+   بوابة الدفع
+   ===================================================== */
+.pm-option {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  transition: all var(--transition);
+  background: rgba(255, 255, 255, 0.02);
+}
+.pm-option:hover,
+.pm-option.selected {
+  border-color: var(--primary);
+  background: var(--primary-glow);
+}
+/* شارات خدمات التقسيط */
+/* لإضافة خدمة تقسيط جديدة: انسخ .bnpl-badge وأعطه اسماً جديداً */
+.bnpl-badge {
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 700;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.bnpl-tamara { background: rgba(0,200,150,0.1);   color: #00c896; border-color: rgba(0,200,150,0.2); }
+.bnpl-tabby  { background: rgba(100,200,50,0.1);  color: #a0d840; border-color: rgba(100,200,50,0.2); }
+
+/* =====================================================
+   الاستجابة للشاشات الصغيرة (موبايل)
+   في المستقبل: أضف هنا تعديلات الموبايل
+   ===================================================== */
+@media (max-width: 900px) {
+  .nav { padding: 0 20px; }
+  .nav-links { display: none; } /* أخفِ الروابط في الموبايل */
+}
+
+/* =====================================================
+   شريط التمرير المخصص
+   ===================================================== */
+::-webkit-scrollbar       { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--gray-border); border-radius: 4px; }
